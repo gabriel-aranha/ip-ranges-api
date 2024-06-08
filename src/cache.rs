@@ -1,0 +1,61 @@
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+use rocket::tokio::time::{self, Duration};
+use crate::integrations::{update_all, IntegrationResult};
+use std::collections::HashMap;
+use tokio::task;
+
+#[allow(dead_code)]
+pub struct IntegrationCache<T> {
+    latest_sha: String,
+    data: Option<T>,
+}
+
+impl<T> IntegrationCache<T> {
+    pub fn new(latest_sha: String, data: Option<T>) -> Self {
+        IntegrationCache { latest_sha, data }
+    }
+}
+
+lazy_static! {
+    // Define the global cache as a map of integration names to their data
+    pub static ref CACHE: Mutex<HashMap<String, Box<dyn std::any::Any + Send>>> = Mutex::new(HashMap::new());
+}
+
+pub async fn initialize_cache() {
+    // Initialize the cache synchronously
+    update_cache().await;
+    
+    // Start periodic updates asynchronously
+    task::spawn(async {
+        periodic_update_cache().await;
+    });
+}
+
+async fn update_cache() {
+    // Update data for all integrations
+    let data = update_all().await;
+
+    // Lock the cache for writing
+    let mut cache = CACHE.lock().unwrap();
+
+    for (integration_name, integration_result) in data {
+        match integration_result {
+            IntegrationResult::Aws(aws_cache) => {
+                cache.insert(integration_name, Box::new(aws_cache));
+            }
+            // Add other integration types here
+        }
+    }
+    println!("Cache initialized");
+}
+
+async fn periodic_update_cache() {
+    // Start periodic updates
+    let mut interval = time::interval(Duration::from_secs(15));
+    loop {
+        interval.tick().await;
+        update_cache().await;
+        println!("Cache updated");
+    }
+}
