@@ -1,0 +1,24 @@
+name: Rust build
+
+on:
+  push
+
+jobs:
+  build:
+    runs-on: [self-hosted, ubuntu-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+      
+    - name: Check Rust code
+      run: cargo check --all --all-features
+      
+    - name: Build Rust code
+      run: cargo build --release
