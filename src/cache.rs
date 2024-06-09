@@ -66,7 +66,7 @@ async fn periodic_update_cache() {
     info!("Starting periodic cache updates");
 
     // Start periodic updates
-    let mut interval = time::interval(Duration::from_secs(15));
+    let mut interval = time::interval(Duration::from_secs(300));
     loop {
         interval.tick().await;
         info!("Performing periodic cache update");
