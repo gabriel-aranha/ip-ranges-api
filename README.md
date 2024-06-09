@@ -1,8 +1,8 @@
-# Cloud IP Range API
+# Cloud IP Ranges API
 
 ## Overview
 
-The Cloud IP Range API is a Rust-based application designed to provide endpoints for retrieving IP ranges of various cloud service providers such as AWS. This API can be integrated into applications or used independently to fetch cloud IP ranges dynamically.
+The Cloud IP Ranges API is a Rust-based application designed to provide endpoints for retrieving IP ranges of various cloud service providers such as AWS. This API can be integrated into applications or used independently to fetch cloud IP ranges dynamically.
 
 ## Features
 
