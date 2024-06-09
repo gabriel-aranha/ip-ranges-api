@@ -36,16 +36,21 @@ fn query_aws_data(
                 data.prefixes
                     .iter()
                     .filter_map(|prefix| {
-                        // Check if the data matches the provided parameters
-                        let matches = region
+                        // Convert both parameter and data to lowercase for case-insensitive comparison
+                        let param_region = region.clone().map(|s| s.to_lowercase());
+                        let param_service = service.clone().map(|s| s.to_lowercase());
+                        let param_network_border_group =
+                            network_border_group.clone().map(|s| s.to_lowercase());
+
+                        let matches = param_region
                             .as_deref()
-                            .map_or(true, |param| prefix.region == param)
-                            && service
+                            .map_or(true, |param| prefix.region.to_lowercase() == param)
+                            && param_service
                                 .as_deref()
-                                .map_or(true, |param| prefix.service == param)
-                            && network_border_group
-                                .as_deref()
-                                .map_or(true, |param| prefix.network_border_group == param);
+                                .map_or(true, |param| prefix.service.to_lowercase() == param)
+                            && param_network_border_group.as_deref().map_or(true, |param| {
+                                prefix.network_border_group.to_lowercase() == param
+                            });
 
                         if matches {
                             // Return the IP prefix as &str
