@@ -1,7 +1,6 @@
 mod api;
 mod cache;
 mod integrations;
-
 use cache::initialize_cache;
 
 #[rocket::main]
@@ -12,7 +11,6 @@ async fn main() -> Result<(), rocket::Error> {
 
     // Launch the Rocket server
     rocket::build()
-        .manage(Mutex::new(Vec::new()))
         .mount("/", api::routes())
         .launch()
         .await?;

@@ -1,8 +1,8 @@
-use std::sync::Mutex;
 use lazy_static::lazy_static;
 use rocket::tokio::time::{self, Duration};
 use crate::integrations::{update_all, IntegrationResult};
-use std::collections::HashMap;
+use dashmap::DashMap;
+use std::sync::Arc;
 use tokio::task;
 
 #[allow(dead_code)]
@@ -19,7 +19,7 @@ impl<T> IntegrationCache<T> {
 
 lazy_static! {
     // Define the global cache as a map of integration names to their data
-    pub static ref CACHE: Mutex<HashMap<String, Box<dyn std::any::Any + Send>>> = Mutex::new(HashMap::new());
+    pub static ref CACHE: Arc<DashMap<String, Box<dyn std::any::Any + Send + Sync>>> = Arc::new(DashMap::new());
 }
 
 pub async fn initialize_cache() {
@@ -36,18 +36,14 @@ async fn update_cache() {
     // Update data for all integrations
     let data = update_all().await;
 
-    // Lock the cache for writing
-    let mut cache = CACHE.lock().unwrap();
-
     for (integration_name, integration_result) in data {
         match integration_result {
             IntegrationResult::Aws(aws_cache) => {
-                cache.insert(integration_name, Box::new(aws_cache));
+                CACHE.insert(integration_name, Box::new(aws_cache));
             }
             // Add other integration types here
         }
     }
-    println!("Cache initialized");
 }
 
 async fn periodic_update_cache() {
