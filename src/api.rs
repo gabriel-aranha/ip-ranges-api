@@ -3,6 +3,7 @@ use crate::cache::CACHE;
 use crate::integrations::aws::AwsIpRanges;
 use rocket::serde::json::serde_json;
 use rocket::{get, routes, Route};
+use tracing::{error, info};
 use uuid::Uuid;
 
 #[get("/aws?<region>&<service>&<network_border_group>")]
@@ -15,7 +16,7 @@ fn query_aws_data(
     let request_id = Uuid::new_v4();
 
     // Log the start of the request with structured fields for received parameters
-    tracing::info!(
+    info!(
         request_id = %request_id,
         region = region.clone().unwrap_or_else(|| "None".to_string()),
         service = service.clone().unwrap_or_else(|| "None".to_string()),
@@ -58,7 +59,7 @@ fn query_aws_data(
 
             // Serialize the filtered data to JSON string
             if !filtered_data.is_empty() {
-                tracing::info!(
+                info!(
                     request_id = %request_id,
                     "AWS data found for request"
                 );
@@ -67,7 +68,7 @@ fn query_aws_data(
         }
     }
     // Log failure to retrieve AWS data
-    tracing::error!(
+    error!(
         request_id = %request_id,
         "Failed to retrieve AWS data"
     );

@@ -42,7 +42,7 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     // Add other integration tasks here
 
     // Wait for all integration tasks to complete
-    let (aws_result /* other_result */, ) = tokio::join!(aws_task /* , other_integration_task */);
+    let (aws_result /* other_result */,) = tokio::join!(aws_task /* , other_integration_task */);
 
     if let Some((integration_name, integration_result)) = aws_result {
         all_data.insert(integration_name, integration_result);

@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use rocket::tokio::time::{self, Duration};
 use std::sync::Arc;
 use tokio::task;
-use tracing::{info, error};
+use tracing::info;
 use uuid::Uuid;
 
 #[allow(dead_code)]
@@ -26,7 +26,7 @@ lazy_static! {
 
 pub async fn initialize_cache() {
     info!("Initializing cache");
-    
+
     // Initialize the cache synchronously
     update_cache().await;
 
@@ -55,7 +55,7 @@ async fn update_cache() {
                     "Cache updated for integration"
                 );
             } // Add other integration types here
-            // Additional integration types should be matched here
+              // Additional integration types should be matched here
         }
     }
 
@@ -64,7 +64,7 @@ async fn update_cache() {
 
 async fn periodic_update_cache() {
     info!("Starting periodic cache updates");
-    
+
     // Start periodic updates
     let mut interval = time::interval(Duration::from_secs(15));
     loop {
