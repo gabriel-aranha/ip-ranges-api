@@ -3,18 +3,15 @@ mod cache;
 mod integrations;
 
 use cache::initialize_cache;
-use tracing::info;
-use tracing_subscriber::{FmtSubscriber, EnvFilter};
+use tracing::{info, Level};
+use tracing_subscriber;
+
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     // Initialize tracing subscriber with appropriate settings
-    let filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info")) // Set default log level to info
-        .unwrap();
-
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
+    let subscriber = tracing_subscriber::fmt()
+        .with_max_level(Level::INFO)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber)
