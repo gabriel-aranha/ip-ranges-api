@@ -24,11 +24,15 @@ pub struct AwsPrefix {
 
 pub struct AwsIntegration {
     cached_sha: Option<String>,
+    execution_id: Uuid,
 }
 
 impl AwsIntegration {
-    pub fn new() -> Self {
-        AwsIntegration { cached_sha: None }
+    pub fn new(execution_id: Uuid) -> Self {
+        AwsIntegration {
+            cached_sha: None,
+            execution_id,
+        }
     }
 }
 
@@ -36,12 +40,14 @@ impl AwsIntegration {
 impl Integration for AwsIntegration {
     type DataModel = AwsIpRanges;
 
-    async fn update_cache(&mut self, execution_id: Uuid) -> IntegrationCache<Self::DataModel> {
+    async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel> {
         let url = "https://ip-ranges.amazonaws.com/ip-ranges.json";
         let response = match reqwest::get(url).await {
             Ok(response) => response.text().await.ok(),
             Err(err) => {
-                error!("Failed to fetch AWS data: {}", err);
+                error!(
+                    execution_id = %self.execution_id,
+                    "Failed to fetch AWS data: {}", err);
                 return IntegrationCache::new("".to_string(), None);
             }
         };
@@ -51,7 +57,7 @@ impl Integration for AwsIntegration {
         if self.cached_sha.as_ref().map_or(true, |sha| sha != &new_sha) {
             let data = self.parse(response.as_ref().unwrap());
             info!(
-                execution_id = %execution_id,
+                execution_id = %self.execution_id,
                 "AWS cache updated"
             );
             self.cached_sha = Some(new_sha.clone());
@@ -65,7 +71,9 @@ impl Integration for AwsIntegration {
         match serde_json::from_str(data) {
             Ok(parsed_data) => Some(parsed_data),
             Err(err) => {
-                error!("Failed to parse JSON: {}", err);
+                error!(
+                    execution_id = %self.execution_id,
+                    "Failed to parse JSON: {}", err);
                 None
             }
         }
