@@ -33,13 +33,13 @@ fn query_aws_data(
                         // Check if the data matches the provided parameters
                         let matches = region
                             .as_deref()
-                            .map_or(true, |param| &prefix.region == param)
+                            .map_or(true, |param| prefix.region == param)
                             && service
                                 .as_deref()
-                                .map_or(true, |param| &prefix.service == param)
+                                .map_or(true, |param| prefix.service == param)
                             && network_border_group
                                 .as_deref()
-                                .map_or(true, |param| &prefix.network_border_group == param);
+                                .map_or(true, |param| prefix.network_border_group == param);
 
                         if matches {
                             // Return the IP prefix as &str

@@ -4,7 +4,6 @@ mod integrations;
 
 use cache::initialize_cache;
 use tracing::{info, Level};
-use tracing_subscriber;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
