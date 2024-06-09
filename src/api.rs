@@ -18,9 +18,9 @@ fn query_aws_data(
     // Log the start of the request with structured fields for received parameters
     info!(
         request_id = %request_id,
-        region = region.clone().unwrap_or_else(|| "None".to_string()),
-        service = service.clone().unwrap_or_else(|| "None".to_string()),
-        network_border_group = network_border_group.clone().unwrap_or_else(|| "None".to_string()),
+        region = region.clone().map(|s| s.to_lowercase()),
+        service = service.clone().map(|s| s.to_lowercase()),
+        network_border_group = network_border_group.clone().map(|s| s.to_lowercase()),
         "Received request"
     );
 
