@@ -8,7 +8,7 @@ use tokio::task;
 #[allow(dead_code)]
 pub struct IntegrationCache<T> {
     latest_sha: String,
-    data: Option<T>,
+    pub data: Option<T>,
 }
 
 impl<T> IntegrationCache<T> {
