@@ -74,7 +74,6 @@ fn query_aws_data(
     None
 }
 
-
 pub fn routes() -> Vec<Route> {
     routes![query_aws_data]
 }
