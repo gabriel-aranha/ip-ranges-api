@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::integrations::aws::AwsIpRanges;
 use std::collections::HashMap;
 use crate::cache::IntegrationCache;
+use uuid::Uuid;
 
 pub enum IntegrationResult {
     Aws(IntegrationCache<AwsIpRanges>),
@@ -13,18 +14,18 @@ pub enum IntegrationResult {
 pub trait Integration {
     type DataModel;
 
-    async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel>;
+    async fn update_cache(&mut self, execution_id: Uuid) -> IntegrationCache<Self::DataModel>;
     fn parse(&self, data: &str) -> Option<Self::DataModel>;
     fn calculate_sha(&self, data: &str) -> String;
 }
 
-pub async fn update_all() -> HashMap<String, IntegrationResult> {
+pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult> {
     let mut all_data = HashMap::new();
 
     // Update data for the AWS integration
     let aws_task = async {
         let mut aws_integration = aws::AwsIntegration::new();
-        let aws_cache = aws_integration.update_cache().await;
+        let aws_cache = aws_integration.update_cache(execution_id).await;
         if let Some(_aws_data) = &aws_cache.data {
             Some(("aws".to_string(), IntegrationResult::Aws(aws_cache)))
         } else {

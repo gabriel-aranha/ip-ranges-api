@@ -6,6 +6,9 @@ use hex::encode;
 use super::Integration;
 use crate::cache::IntegrationCache;
 use rocket::serde::json::serde_json;
+use tracing::{error, info};
+use uuid::Uuid;
+
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AwsIpRanges {
@@ -34,12 +37,12 @@ impl AwsIntegration {
 impl Integration for AwsIntegration {
     type DataModel = AwsIpRanges;
 
-    async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel> {
+    async fn update_cache(&mut self, execution_id: Uuid) -> IntegrationCache<Self::DataModel> {
         let url = "https://ip-ranges.amazonaws.com/ip-ranges.json";
         let response = match reqwest::get(url).await {
             Ok(response) => response.text().await.ok(),
             Err(err) => {
-                eprintln!("Failed to fetch AWS data: {}", err);
+                error!("Failed to fetch AWS data: {}", err);
                 return IntegrationCache::new("".to_string(), None);
             }
         };
@@ -48,6 +51,10 @@ impl Integration for AwsIntegration {
         
         if self.cached_sha.as_ref().map_or(true, |sha| sha != &new_sha) {
             let data = self.parse(response.as_ref().unwrap());
+            info!(
+                execution_id = %execution_id,
+                "AWS cache updated"
+            );
             self.cached_sha = Some(new_sha.clone());
             IntegrationCache::new(new_sha, data)
         } else {
@@ -59,7 +66,7 @@ impl Integration for AwsIntegration {
         match serde_json::from_str(data) {
             Ok(parsed_data) => Some(parsed_data),
             Err(err) => {
-                eprintln!("Failed to parse JSON: {}", err);
+                error!("Failed to parse JSON: {}", err);
                 None
             }
         }

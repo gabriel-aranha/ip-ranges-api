@@ -4,6 +4,8 @@ use crate::integrations::{update_all, IntegrationResult};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::task;
+use tracing::info;
+use uuid::Uuid;
 
 #[allow(dead_code)]
 pub struct IntegrationCache<T> {
@@ -33,13 +35,22 @@ pub async fn initialize_cache() {
 }
 
 async fn update_cache() {
+    // Generate a unique execution ID for this cache update
+    let execution_id = Uuid::new_v4();
+
     // Update data for all integrations
-    let data = update_all().await;
+    let data = update_all(execution_id).await;
 
     for (integration_name, integration_result) in data {
         match integration_result {
             IntegrationResult::Aws(aws_cache) => {
-                CACHE.insert(integration_name, Box::new(aws_cache));
+                let integration_name_str = integration_name.as_str();
+                CACHE.insert(integration_name.clone(), Box::new(aws_cache));
+                info!(
+                    integration_name = integration_name_str,
+                    execution_id = %execution_id,
+                    "Cache updated for integration"
+                );
             }
             // Add other integration types here
         }
@@ -52,6 +63,5 @@ async fn periodic_update_cache() {
     loop {
         interval.tick().await;
         update_cache().await;
-        println!("Cache updated");
     }
 }
