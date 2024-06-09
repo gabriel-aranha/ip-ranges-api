@@ -24,7 +24,9 @@ pub async fn update_all() -> HashMap<String, IntegrationResult> {
     // Update data for the AWS integration
     let mut aws_integration = aws::AwsIntegration::new();
     let aws_cache = aws_integration.update_cache().await;
-    all_data.insert("aws".to_string(), IntegrationResult::Aws(aws_cache));
+    if let Some(_aws_data) = &aws_cache.data {
+        all_data.insert("aws".to_string(), IntegrationResult::Aws(aws_cache));
+    }
 
     // Update data for other integrations here
 
