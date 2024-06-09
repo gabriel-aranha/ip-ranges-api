@@ -3,7 +3,6 @@ use crate::cache::CACHE;
 use crate::integrations::aws::AwsIpRanges;
 use rocket::serde::json::serde_json;
 use rocket::{get, routes, Route};
-use tracing::{error, info};
 use uuid::Uuid;
 
 #[get("/aws?<region>&<service>&<network_border_group>")]
@@ -15,8 +14,14 @@ fn query_aws_data(
     // Generate a unique request ID
     let request_id = Uuid::new_v4();
 
-    // Log the request ID
-    info!("Request ID: {}", request_id);
+    // Log the start of the request with structured fields for received parameters
+    tracing::info!(
+        request_id = %request_id,
+        region = region.clone().unwrap_or_else(|| "None".to_string()),
+        service = service.clone().unwrap_or_else(|| "None".to_string()),
+        network_border_group = network_border_group.clone().unwrap_or_else(|| "None".to_string()),
+        "Received request"
+    );
 
     // Read the global cache
     let cache = CACHE.clone();
@@ -53,14 +58,22 @@ fn query_aws_data(
 
             // Serialize the filtered data to JSON string
             if !filtered_data.is_empty() {
-                info!("AWS data found for request ID: {}", request_id);
+                tracing::info!(
+                    request_id = %request_id,
+                    "AWS data found for request"
+                );
                 return serde_json::to_string(&filtered_data).ok();
             }
         }
     }
-    error!("Failed to retrieve AWS data for request ID: {}", request_id);
+    // Log failure to retrieve AWS data
+    tracing::error!(
+        request_id = %request_id,
+        "Failed to retrieve AWS data"
+    );
     None
 }
+
 
 pub fn routes() -> Vec<Route> {
     routes![query_aws_data,]
