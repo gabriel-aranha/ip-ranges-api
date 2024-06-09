@@ -29,7 +29,10 @@ pub struct AwsIntegration {
 
 impl AwsIntegration {
     pub fn new(execution_id: Uuid) -> Self {
-        AwsIntegration { cached_sha: None, execution_id }
+        AwsIntegration {
+            cached_sha: None,
+            execution_id,
+        }
     }
 }
 
