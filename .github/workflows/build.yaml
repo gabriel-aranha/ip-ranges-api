@@ -19,6 +19,12 @@ jobs:
       
     - name: Check Rust code
       run: cargo check --all --all-features
+
+    - name: Lint Rust code with Clippy
+      run: cargo clippy --all --all-targets -- -D warnings
+      
+    - name: Format Rust code with Rustfmt
+      run: cargo fmt --all -- --check
       
     - name: Build Rust code
       run: cargo build --release

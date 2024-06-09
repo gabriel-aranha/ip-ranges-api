@@ -6,7 +6,6 @@ use cache::initialize_cache;
 use tracing::{info, Level};
 use tracing_subscriber;
 
-
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     // Initialize tracing subscriber with appropriate settings
@@ -14,18 +13,14 @@ async fn main() -> Result<(), rocket::Error> {
         .with_max_level(Level::INFO)
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Failed to set subscriber");
+    tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
 
     // Initialize the cache and start periodic updates
     initialize_cache().await;
     info!("Cache initialized");
 
     // Launch the Rocket server
-    rocket::build()
-        .mount("/", api::routes())
-        .launch()
-        .await?;
+    rocket::build().mount("/", api::routes()).launch().await?;
 
     Ok(())
 }
