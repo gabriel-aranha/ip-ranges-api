@@ -63,5 +63,5 @@ fn query_aws_data(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![query_aws_data,]
+    routes![query_aws_data]
 }
