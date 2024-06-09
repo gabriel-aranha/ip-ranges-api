@@ -1,7 +1,7 @@
-use lazy_static::lazy_static;
-use rocket::tokio::time::{self, Duration};
 use crate::integrations::{update_all, IntegrationResult};
 use dashmap::DashMap;
+use lazy_static::lazy_static;
+use rocket::tokio::time::{self, Duration};
 use std::sync::Arc;
 use tokio::task;
 use tracing::info;
@@ -27,7 +27,7 @@ lazy_static! {
 pub async fn initialize_cache() {
     // Initialize the cache synchronously
     update_cache().await;
-    
+
     // Start periodic updates asynchronously
     task::spawn(async {
         periodic_update_cache().await;
@@ -51,8 +51,7 @@ async fn update_cache() {
                     execution_id = %execution_id,
                     "Cache updated for integration"
                 );
-            }
-            // Add other integration types here
+            } // Add other integration types here
         }
     }
 }

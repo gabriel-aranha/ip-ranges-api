@@ -1,14 +1,13 @@
-use async_trait::async_trait;
-use reqwest;
-use serde::Deserialize;
-use sha2::{Sha256, Digest};
-use hex::encode;
 use super::Integration;
 use crate::cache::IntegrationCache;
+use async_trait::async_trait;
+use hex::encode;
+use reqwest;
 use rocket::serde::json::serde_json;
+use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use tracing::{error, info};
 use uuid::Uuid;
-
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AwsIpRanges {
@@ -48,7 +47,7 @@ impl Integration for AwsIntegration {
         };
 
         let new_sha = self.calculate_sha(response.as_ref().unwrap());
-        
+
         if self.cached_sha.as_ref().map_or(true, |sha| sha != &new_sha) {
             let data = self.parse(response.as_ref().unwrap());
             info!(

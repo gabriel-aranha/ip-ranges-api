@@ -1,8 +1,8 @@
-use rocket::{get, routes, Route};
-use crate::integrations::aws::AwsIpRanges;
-use rocket::serde::json::serde_json;
 use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
+use crate::integrations::aws::AwsIpRanges;
+use rocket::serde::json::serde_json;
+use rocket::{get, routes, Route};
 use uuid::Uuid;
 
 #[get("/aws?<region>&<service>&<network_border_group>")]
@@ -74,9 +74,6 @@ fn query_aws_data(
     None
 }
 
-
 pub fn routes() -> Vec<Route> {
-    routes![
-        query_aws_data,
-    ]
+    routes![query_aws_data]
 }
