@@ -22,13 +22,26 @@ pub async fn update_all() -> HashMap<String, IntegrationResult> {
     let mut all_data = HashMap::new();
 
     // Update data for the AWS integration
-    let mut aws_integration = aws::AwsIntegration::new();
-    let aws_cache = aws_integration.update_cache().await;
-    if let Some(_aws_data) = &aws_cache.data {
-        all_data.insert("aws".to_string(), IntegrationResult::Aws(aws_cache));
+    let aws_task = async {
+        let mut aws_integration = aws::AwsIntegration::new();
+        let aws_cache = aws_integration.update_cache().await;
+        if let Some(_aws_data) = &aws_cache.data {
+            Some(("aws".to_string(), IntegrationResult::Aws(aws_cache)))
+        } else {
+            None
+        }
+    };
+
+    // Add other integration tasks here
+
+    // Wait for all integration tasks to complete
+    let (aws_result, /* other_result */) = tokio::join!(aws_task /* , other_integration_task */);
+
+    if let Some((integration_name, integration_result)) = aws_result {
+        all_data.insert(integration_name, integration_result);
     }
 
-    // Update data for other integrations here
+    // Add other integration results here
 
     all_data
 }
