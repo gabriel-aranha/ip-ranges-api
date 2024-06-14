@@ -1,8 +1,8 @@
 use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
 use crate::fetchers::gcp::GcpIpRanges;
-use rocket::serde::json::serde_json;
 use rocket::get;
+use rocket::serde::json::serde_json;
 use tracing::{error, info};
 use uuid::Uuid;
 
