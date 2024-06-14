@@ -1,11 +1,9 @@
 use super::Integration;
 use crate::cache::IntegrationCache;
 use async_trait::async_trait;
-use hex::encode;
 use reqwest;
 use rocket::serde::json::serde_json;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -23,16 +21,12 @@ pub struct AwsPrefix {
 }
 
 pub struct AwsIntegration {
-    cached_sha: Option<String>,
     execution_id: Uuid,
 }
 
 impl AwsIntegration {
     pub fn new(execution_id: Uuid) -> Self {
-        AwsIntegration {
-            cached_sha: None,
-            execution_id,
-        }
+        AwsIntegration { execution_id }
     }
 }
 
@@ -48,23 +42,17 @@ impl Integration for AwsIntegration {
                 error!(
                     execution_id = %self.execution_id,
                     "Failed to fetch AWS data: {}", err);
-                return IntegrationCache::new("".to_string(), None);
+                return IntegrationCache::new(None);
             }
         };
 
-        let new_sha = self.calculate_sha(response.as_ref().unwrap());
+        let data = self.parse(response.as_ref().unwrap());
+        info!(
+            execution_id = %self.execution_id,
+            "AWS cache updated"
+        );
 
-        if self.cached_sha.as_ref().map_or(true, |sha| sha != &new_sha) {
-            let data = self.parse(response.as_ref().unwrap());
-            info!(
-                execution_id = %self.execution_id,
-                "AWS cache updated"
-            );
-            self.cached_sha = Some(new_sha.clone());
-            IntegrationCache::new(new_sha, data)
-        } else {
-            IntegrationCache::new(new_sha, None)
-        }
+        IntegrationCache::new(data)
     }
 
     fn parse(&self, data: &str) -> Option<Self::DataModel> {
@@ -77,12 +65,5 @@ impl Integration for AwsIntegration {
                 None
             }
         }
-    }
-
-    fn calculate_sha(&self, data: &str) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        let hash_result = hasher.finalize();
-        encode(hash_result)
     }
 }
