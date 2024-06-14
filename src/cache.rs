@@ -1,4 +1,4 @@
-use crate::integrations::{update_all, IntegrationResult};
+use crate::fetchers::{update_all, IntegrationResult};
 use dashmap::DashMap;
 use lazy_static::lazy_static;
 use rocket::tokio::time::{self, Duration};
@@ -9,13 +9,12 @@ use uuid::Uuid;
 
 #[allow(dead_code)]
 pub struct IntegrationCache<T> {
-    latest_sha: String,
     pub data: Option<T>,
 }
 
 impl<T> IntegrationCache<T> {
-    pub fn new(latest_sha: String, data: Option<T>) -> Self {
-        IntegrationCache { latest_sha, data }
+    pub fn new(data: Option<T>) -> Self {
+        IntegrationCache { data }
     }
 }
 
@@ -52,10 +51,18 @@ async fn update_cache() {
                 info!(
                     integration_name = integration_name_str,
                     execution_id = %execution_id,
-                    "Cache updated for integration"
+                    "Cache updated for AWS integration"
+                );
+            }
+            IntegrationResult::Gcp(gcp_cache) => {
+                let integration_name_str = integration_name.as_str();
+                CACHE.insert(integration_name.clone(), Box::new(gcp_cache));
+                info!(
+                    integration_name = integration_name_str,
+                    execution_id = %execution_id,
+                    "Cache updated for GCP integration"
                 );
             } // Add other integration types here
-              // Additional integration types should be matched here
         }
     }
 

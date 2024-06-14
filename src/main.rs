@@ -1,6 +1,6 @@
-mod api;
 mod cache;
-mod integrations;
+mod fetchers;
+mod handlers;
 
 use cache::initialize_cache;
 use tracing::{info, Level};
@@ -19,7 +19,10 @@ async fn main() -> Result<(), rocket::Error> {
     info!("Cache initialized");
 
     // Launch the Rocket server
-    rocket::build().mount("/", api::routes()).launch().await?;
+    rocket::build()
+        .mount("/", handlers::routes())
+        .launch()
+        .await?;
 
     Ok(())
 }

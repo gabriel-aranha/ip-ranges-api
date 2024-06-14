@@ -1,13 +1,13 @@
 use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
-use crate::integrations::aws::AwsIpRanges;
+use crate::fetchers::aws::AwsIpRanges;
+use rocket::get;
 use rocket::serde::json::serde_json;
-use rocket::{get, routes, Route};
 use tracing::{error, info};
 use uuid::Uuid;
 
-#[get("/aws?<region>&<service>&<network_border_group>")]
-fn query_aws_data(
+#[get("/v1/aws?<region>&<service>&<network_border_group>")]
+pub fn query_aws_data(
     region: Option<String>,
     service: Option<String>,
     network_border_group: Option<String>,
@@ -78,8 +78,4 @@ fn query_aws_data(
         "Failed to retrieve AWS data"
     );
     None
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![query_aws_data]
 }
