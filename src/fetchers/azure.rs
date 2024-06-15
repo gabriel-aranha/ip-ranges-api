@@ -47,8 +47,8 @@ impl Integration for AzureIntegration {
             Ok(response) => response.text().await.ok(),
             Err(err) => {
                 error!(
-                    execution_id = %self.execution_id,
-                    "Failed to fetch Azure data: {}", err);
+					execution_id = %self.execution_id,
+					"Failed to fetch Azure data: {}", err);
                 return IntegrationCache::new(None);
             }
         };
@@ -67,8 +67,8 @@ impl Integration for AzureIntegration {
             Ok(parsed_data) => Some(parsed_data),
             Err(err) => {
                 error!(
-                    execution_id = %self.execution_id,
-                    "Failed to parse JSON: {}", err);
+					execution_id = %self.execution_id,
+					"Failed to parse JSON: {}", err);
                 None
             }
         }
