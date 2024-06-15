@@ -58,8 +58,8 @@ jobs:
       run: |
         combinations=(
           "scope=africa-south1&ipv4=true:200"
-          "scope=europe-west1&service=compute&ipv4=true:200"
-          "service=storage:404"
+          "scope=europe-west1&service=google%20cloud&ipv4=true:200"
+          "service=google%20cloud:404"
           "ipv4=true:200"
           "ipv6=true:200"
           ":404"
