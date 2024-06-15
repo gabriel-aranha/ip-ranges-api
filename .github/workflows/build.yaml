@@ -1,93 +1,45 @@
 name: Rust build and E2E tests
 
 on:
-  push
+	push
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+	build:
+		runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+		steps:
+		- name: Checkout code
+			uses: actions/checkout@v2
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
+		- name: Install Rust
+			uses: actions-rs/toolchain@v1
+			with:
+				profile: minimal
+				toolchain: stable
 
-    - name: Check Rust code
-      run: cargo check --all --all-features
+		- name: Check Rust code
+			run: cargo check --all --all-features
 
-    - name: Lint Rust code with Clippy
-      run: cargo clippy --all --all-targets -- -D warnings
+		- name: Lint Rust code with Clippy
+			run: cargo clippy --all --all-targets -- -D warnings
 
-    - name: Format Rust code with Rustfmt
-      run: cargo fmt --all -- --check
+		- name: Format Rust code with Rustfmt
+			run: cargo fmt --all -- --check
 
-    - name: Build Rust code
-      run: cargo build --release
+		- name: Build Rust code
+			run: cargo build --release
 
-    - name: Run API server
-      run: cargo run --release &
+		- name: Run API server
+			run: cargo run --release &
 
-    - name: Wait for API server to start
-      run: sleep 5
+		- name: Wait for API server to start
+			run: sleep 5
 
-    - name: Test AWS endpoint
-      run: |
-        combinations=(
-          "region=us-east-2&service=s3:200"
-          "region=us-west-1&service=ec2&network_border_group=us-west-1:200"
-          "service=s3:200"
-          "region=eu-central-1:200"
-          "network_border_group=ap-southeast-1:200"
-          ":200"
-        )
-        for combo in "${combinations[@]}"; do
-          IFS=":" read params expected <<< "$combo"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/v1/aws?$params")
-          if [ $status -ne $expected ]; then
-            echo "AWS test failed for params: $params. Expected $expected, got $status"
-            exit 1
-          fi
-        done
+		- name: Test AWS endpoint
+			run: ./e2e/aws.sh
 
-    - name: Test Azure endpoint
-      run: |
-        combinations=(
-          "region=westus2&ipv4=true:200"
-          "region=eastus&system_service=azurestorage&ipv4=true&ipv6=true:200"
-          "system_service=azurestorage:404"
-          "ipv4=true:200"
-          "ipv6=true:200"
-          ":404"
-        )
-        for combo in "${combinations[@]}"; do
-          IFS=":" read params expected <<< "$combo"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/v1/azure?$params")
-          if [ $status -ne $expected ]; then
-            echo "Azure test failed for params: $params. Expected $expected, got $status"
-            exit 1
-          fi
-        done
+		- name: Test GCP endpoint
+			run: ./e2e/gcp.sh
 
-    - name: Test GCP endpoint
-      run: |
-        combinations=(
-          "scope=africa-south1&ipv4=true:200"
-          "scope=europe-west1&service=google%20cloud&ipv4=true:200"
-          "service=google%20cloud:404"
-          "ipv4=true:200"
-          "ipv6=true:200"
-          ":404"
-        )
-        for combo in "${combinations[@]}"; do
-          IFS=":" read params expected <<< "$combo"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/v1/gcp?$params")
-          if [ $status -ne $expected ]; then
-            echo "GCP test failed for params: $params. Expected $expected, got $status"
-            exit 1
-          fi
-        done
+		- name: Test Azure endpoint
+			run: ./e2e/azure.sh
