@@ -33,7 +33,7 @@ jobs:
       run: cargo run --release &
 
     - name: Wait for API server to start
-      run: sleep 5
+      run: sleep 15
 
     - name: Test AWS endpoint
       run: ./e2e/aws.sh
