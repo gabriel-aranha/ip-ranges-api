@@ -3,6 +3,7 @@ use crate::cache::IntegrationCache;
 use async_trait::async_trait;
 use reqwest;
 use rocket::serde::json::serde_json;
+use scraper::{Html, Selector};
 use serde::Deserialize;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -35,6 +36,23 @@ impl AzureIntegration {
     pub fn new(execution_id: Uuid) -> Self {
         AzureIntegration { execution_id }
     }
+
+    async fn fetch_latest_url() -> Option<String> {
+        let url = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519";
+        let response = reqwest::get(url).await.ok()?.text().await.ok()?;
+        
+        let document = Html::parse_document(&response);
+        let selector = Selector::parse("a").unwrap();
+
+        for element in document.select(&selector) {
+            if let Some(href) = element.value().attr("href") {
+                if href.contains("ServiceTags_") {
+                    return Some(href.to_string());
+                }
+            }
+        }
+        None
+    }
 }
 
 #[async_trait]
@@ -42,13 +60,24 @@ impl Integration for AzureIntegration {
     type DataModel = AzureIpRanges;
 
     async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel> {
-        let url = "https://raw.githubusercontent.com/femueller/cloud-ip-ranges/master/microsoft-azure-ip-ranges.json";
-        let response = match reqwest::get(url).await {
+        let url = match Self::fetch_latest_url().await {
+            Some(url) => url,
+            None => {
+                error!(
+                    execution_id = %self.execution_id,
+                    "Failed to find the latest Azure IP ranges URL"
+                );
+                return IntegrationCache::new(None);
+            }
+        };
+
+        let response = match reqwest::get(&url).await {
             Ok(response) => response.text().await.ok(),
             Err(err) => {
                 error!(
-					execution_id = %self.execution_id,
-					"Failed to fetch Azure data: {}", err);
+                    execution_id = %self.execution_id,
+                    "Failed to fetch Azure data: {}", err
+                );
                 return IntegrationCache::new(None);
             }
         };
@@ -67,8 +96,9 @@ impl Integration for AzureIntegration {
             Ok(parsed_data) => Some(parsed_data),
             Err(err) => {
                 error!(
-					execution_id = %self.execution_id,
-					"Failed to parse JSON: {}", err);
+                    execution_id = %self.execution_id,
+                    "Failed to parse JSON: {}", err
+                );
                 None
             }
         }
