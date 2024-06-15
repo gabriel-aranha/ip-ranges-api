@@ -40,7 +40,7 @@ impl AzureIntegration {
     async fn fetch_latest_url() -> Option<String> {
         let url = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519";
         let response = reqwest::get(url).await.ok()?.text().await.ok()?;
-        
+
         let document = Html::parse_document(&response);
         let selector = Selector::parse("a").unwrap();
 
