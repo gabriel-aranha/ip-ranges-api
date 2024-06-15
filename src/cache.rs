@@ -54,6 +54,15 @@ async fn update_cache() {
                     "Cache updated for AWS integration"
                 );
             }
+            IntegrationResult::Azure(azure_cache) => {
+                let integration_name_str = integration_name.as_str();
+                CACHE.insert(integration_name.clone(), Box::new(azure_cache));
+                info!(
+                    integration_name = integration_name_str,
+                    execution_id = %execution_id,
+                    "Cache updated for Azure integration"
+                );
+            }
             IntegrationResult::Gcp(gcp_cache) => {
                 let integration_name_str = integration_name.as_str();
                 CACHE.insert(integration_name.clone(), Box::new(gcp_cache));
@@ -62,7 +71,7 @@ async fn update_cache() {
                     execution_id = %execution_id,
                     "Cache updated for GCP integration"
                 );
-            } // Add other integration types here
+            }
         }
     }
 
