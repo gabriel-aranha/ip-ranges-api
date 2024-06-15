@@ -10,67 +10,67 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AzureIpRanges {
-	pub values: Vec<AzureValue>,
+    pub values: Vec<AzureValue>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AzureValue {
-	pub properties: AzureProperties,
+    pub properties: AzureProperties,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AzureProperties {
-	pub region: String,
-	pub system_service: String,
-	pub address_prefixes: Vec<String>,
+    pub region: String,
+    pub system_service: String,
+    pub address_prefixes: Vec<String>,
 }
 
 pub struct AzureIntegration {
-	execution_id: Uuid,
+    execution_id: Uuid,
 }
 
 impl AzureIntegration {
-	pub fn new(execution_id: Uuid) -> Self {
-		AzureIntegration { execution_id }
-	}
+    pub fn new(execution_id: Uuid) -> Self {
+        AzureIntegration { execution_id }
+    }
 }
 
 #[async_trait]
 impl Integration for AzureIntegration {
-	type DataModel = AzureIpRanges;
+    type DataModel = AzureIpRanges;
 
-	async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel> {
-		let url = "https://raw.githubusercontent.com/femueller/cloud-ip-ranges/master/microsoft-azure-ip-ranges.json";
-		let response = match reqwest::get(url).await {
-			Ok(response) => response.text().await.ok(),
-			Err(err) => {
-				error!(
+    async fn update_cache(&mut self) -> IntegrationCache<Self::DataModel> {
+        let url = "https://raw.githubusercontent.com/femueller/cloud-ip-ranges/master/microsoft-azure-ip-ranges.json";
+        let response = match reqwest::get(url).await {
+            Ok(response) => response.text().await.ok(),
+            Err(err) => {
+                error!(
 					execution_id = %self.execution_id,
 					"Failed to fetch Azure data: {}", err);
-				return IntegrationCache::new(None);
-			}
-		};
+                return IntegrationCache::new(None);
+            }
+        };
 
-		let data = self.parse(response.as_ref().unwrap());
-		info!(
-			execution_id = %self.execution_id,
-			"Azure cache updated"
-		);
+        let data = self.parse(response.as_ref().unwrap());
+        info!(
+            execution_id = %self.execution_id,
+            "Azure cache updated"
+        );
 
-		IntegrationCache::new(data)
-	}
+        IntegrationCache::new(data)
+    }
 
-	fn parse(&self, data: &str) -> Option<Self::DataModel> {
-		match serde_json::from_str(data) {
-			Ok(parsed_data) => Some(parsed_data),
-			Err(err) => {
-				error!(
+    fn parse(&self, data: &str) -> Option<Self::DataModel> {
+        match serde_json::from_str(data) {
+            Ok(parsed_data) => Some(parsed_data),
+            Err(err) => {
+                error!(
 					execution_id = %self.execution_id,
 					"Failed to parse JSON: {}", err);
-				None
-			}
-		}
-	}
+                None
+            }
+        }
+    }
 }
