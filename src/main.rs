@@ -13,9 +13,8 @@ async fn main() -> Result<(), rocket::Error> {
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
         .finish();
-    
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Failed to set subscriber");
+
+    tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
 
     // Initialize the cache and start periodic updates
     initialize_cache().await;
