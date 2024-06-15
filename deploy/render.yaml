@@ -1,0 +1,11 @@
+# Exported from Render on 2024-06-15T15:27:30Z
+services:
+- type: web
+  name: ip-ranges-api
+  runtime: rust
+  repo: https://github.com/gabriel-aranha/ip-ranges-api
+  plan: free
+  region: ohio
+  buildCommand: cargo build --release
+  startCommand: cargo run --release
+version: "1"
