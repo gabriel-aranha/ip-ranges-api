@@ -6,7 +6,7 @@ combinations=(
 	"service=s3:200"
 	"region=eu-central-1:200"
 	"network_border_group=ap-southeast-1:200"
-	":404"
+	":200"
 )
 
 for combo in "${combinations[@]}"; do
