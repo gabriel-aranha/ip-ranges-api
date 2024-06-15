@@ -6,6 +6,9 @@ services:
   repo: https://github.com/gabriel-aranha/ip-ranges-api
   plan: free
   region: ohio
+  envVars:
+    - key: PORT
+      value: 8000
   buildCommand: cargo build --release
   startCommand: cargo run --release
 version: "1"
