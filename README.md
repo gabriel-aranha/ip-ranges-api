@@ -79,3 +79,24 @@ GET /v1/gcp?scope=<scope>&service=<service>&ipv4=<true|false>&ipv6=<true|false>
 ```
 curl "http://localhost:8000/v1/gcp?scope=africa-south1&ipv4=true"
 ```
+
+### Azure Usage
+
+#### Endpoint
+
+```
+GET /v1/azure?region=<region>&system_service=<system_service>&ipv4=<true|false>&ipv6=<true|false>
+```
+
+#### Parameters
+
+- `region` (optional): Filter by Azure region.
+- `system_service` (optional): Filter by Azure system service.
+- `ipv4` (optional): Include IPv4 prefixes if true (default: false).
+- `ipv6` (optional): Include IPv6 prefixes if true (default: false).
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/azure?region=westus2&ipv4=true"
+```
