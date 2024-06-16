@@ -3,10 +3,10 @@
 combinations=(
 	"scope=africa-south1&ipv4=true:200"
 	"scope=europe-west1&service=google%20cloud&ipv4=true:200"
-	"service=google%20cloud:404"
+	"service=google%20cloud:400"
 	"ipv4=true:200"
 	"ipv6=true:200"
-	":404"
+	":400"
 )
 
 for combo in "${combinations[@]}"; do
