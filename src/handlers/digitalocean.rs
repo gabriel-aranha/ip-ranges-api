@@ -59,28 +59,31 @@ pub fn query_digitalocean_data(
         {
             // Filter the DigitalOcean data based on the provided parameters
             let mut filtered_data: Vec<String> =
-                digitalocean_cache.data.as_ref().map_or_else(Vec::new, |data| {
-                    let param_alpha2code = alpha2code.clone().map(|s| s.to_uppercase());
-                    let param_region = region.clone().map(|s| s.to_lowercase());
+                digitalocean_cache
+                    .data
+                    .as_ref()
+                    .map_or_else(Vec::new, |data| {
+                        let param_alpha2code = alpha2code.clone().map(|s| s.to_uppercase());
+                        let param_region = region.clone().map(|s| s.to_lowercase());
 
-                    data.ranges
-                        .iter()
-                        .filter_map(|range| {
-                            let matches = param_alpha2code
-                                .as_deref()
-                                .map_or(true, |param| param == range.alpha2code.to_uppercase())
-                                && param_region.as_deref().map_or(true, |param| {
-                                    range.region.to_lowercase().contains(param)
-                                });
+                        data.ranges
+                            .iter()
+                            .filter_map(|range| {
+                                let matches = param_alpha2code
+                                    .as_deref()
+                                    .map_or(true, |param| param == range.alpha2code.to_uppercase())
+                                    && param_region.as_deref().map_or(true, |param| {
+                                        range.region.to_lowercase().contains(param)
+                                    });
 
-                            if matches {
-                                Some(range.ip_prefix.clone())
-                            } else {
-                                None
-                            }
-                        })
-                        .collect()
-                });
+                                if matches {
+                                    Some(range.ip_prefix.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    });
 
             let ipv4_flag = ipv4.unwrap_or(false);
             let ipv6_flag = ipv6.unwrap_or(false);
