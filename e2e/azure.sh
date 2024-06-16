@@ -3,10 +3,10 @@
 combinations=(
 	"region=westus2&ipv4=true:200"
 	"region=eastus&system_service=azurestorage&ipv4=true&ipv6=true:200"
-	"system_service=azurestorage:404"
+	"system_service=azurestorage:400"
 	"ipv4=true:200"
 	"ipv6=true:200"
-	":404"
+	":400"
 )
 
 for combo in "${combinations[@]}"; do
