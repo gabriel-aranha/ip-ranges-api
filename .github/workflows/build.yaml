@@ -47,6 +47,9 @@ jobs:
     - name: Test Cloudflare endpoint
       run: ./e2e/cloudflare.sh
 
+    - name: Test DigitalOcean endpoint
+      run: ./e2e/digitalocean.sh
+
     - name: Test Fastly endpoint
       run: ./e2e/fastly.sh
 
