@@ -69,6 +69,14 @@ async fn update_cache() {
                     "Cache updated for Cloudflare integration"
                 );
             }
+            IntegrationResult::DigitalOcean(digital_ocean_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(digital_ocean_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Digital Ocean integration"
+                );
+            }
             IntegrationResult::Fastly(fastly_cache) => {
                 CACHE.insert(integration_name.clone(), Box::new(fastly_cache));
                 info!(

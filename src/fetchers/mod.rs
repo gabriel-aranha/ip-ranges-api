@@ -1,8 +1,7 @@
-// fetchers.rs
-
 pub mod aws;
 pub mod azure;
 pub mod cloudflare;
+pub mod digitalocean;
 pub mod fastly;
 pub mod gcp;
 pub mod linode;
@@ -17,6 +16,7 @@ use uuid::Uuid;
 use aws::AwsIpRanges;
 use azure::AzureIpRanges;
 use cloudflare::CloudflareIpRanges;
+use digitalocean::DigitalOceanIpRanges;
 use fastly::FastlyIpRanges;
 use gcp::GcpIpRanges;
 use linode::LinodeIpRanges;
@@ -26,6 +26,7 @@ pub enum IntegrationResult {
     Aws(IntegrationCache<AwsIpRanges>),
     Azure(IntegrationCache<AzureIpRanges>),
     Cloudflare(IntegrationCache<CloudflareIpRanges>),
+    DigitalOcean(IntegrationCache<DigitalOceanIpRanges>),
     Fastly(IntegrationCache<FastlyIpRanges>),
     Gcp(IntegrationCache<GcpIpRanges>),
     Linode(IntegrationCache<LinodeIpRanges>),
@@ -87,6 +88,23 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
             ))
         } else {
             error!(execution_id = %execution_id, "Cloudflare integration update failed");
+            None
+        }
+    };
+
+    // Digital Ocean integration update task
+    let digitalocean_task = async {
+        info!(execution_id = %execution_id, "Starting Digital Ocean integration update");
+        let mut digitalocean_integration = digitalocean::DigitalOceanIntegration::new(execution_id);
+        let digitalocean_cache = digitalocean_integration.update_cache().await;
+        if let Some(_digital_ocean_data) = &digitalocean_cache.data {
+            info!(execution_id = %execution_id, "Digital Ocean integration update succeeded");
+            Some((
+                "digitalocean".to_string(),
+                IntegrationResult::DigitalOcean(digitalocean_cache),
+            ))
+        } else {
+            error!(execution_id = %execution_id, "Digital Ocean integration update failed");
             None
         }
     };
@@ -161,6 +179,7 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
         aws_result,
         azure_result,
         cloudflare_result,
+        digitalocean_result,
         fastly_result,
         gcp_result,
         linode_result,
@@ -169,6 +188,7 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
         aws_task,
         azure_task,
         cloudflare_task,
+        digitalocean_task,
         fastly_task,
         gcp_task,
         linode_task,
@@ -184,6 +204,10 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     }
 
     if let Some((integration_name, integration_result)) = cloudflare_result {
+        all_data.insert(integration_name, integration_result);
+    }
+
+    if let Some((integration_name, integration_result)) = digitalocean_result {
         all_data.insert(integration_name, integration_result);
     }
 
