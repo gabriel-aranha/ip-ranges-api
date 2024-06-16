@@ -3,7 +3,7 @@
 combinations=(
     "region=us-ashburn-1&tag=OCI:200"
     "region=us-ashburn-1:200"
-    "tag=OCI:200"   
+    "tag=oci:200"   
     ":200"
 )
 

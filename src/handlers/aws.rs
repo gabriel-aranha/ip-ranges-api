@@ -7,7 +7,6 @@ use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
 
-// Make the AwsApiResponse struct public
 #[derive(Serialize)]
 pub struct AwsApiResponse<T> {
     pub status: String,

@@ -7,7 +7,6 @@ use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
 
-// Define the FastlyApiResponse struct
 #[derive(Serialize)]
 pub struct FastlyApiResponse {
     pub status: String,

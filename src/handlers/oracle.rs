@@ -7,7 +7,6 @@ use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
 
-// Define the OracleApiResponse struct
 #[derive(Serialize)]
 pub struct OracleApiResponse {
     pub status: String,
@@ -48,21 +47,24 @@ pub async fn query_oracle_data(
                     .data
                     .as_ref()
                     .map_or_else(Vec::new, |oracle_ranges| {
+                        let param_region = region.clone().map(|s| s.to_lowercase());
+                        let param_tag = tag.clone().map(|s| s.to_lowercase());
+
                         let mut addresses: Vec<String> = Vec::new();
 
                         for oracle_region in &oracle_ranges.regions {
-                            // Check if the region matches the requested region (if provided)
-                            if region
-                                .clone()
-                                .map_or(true, |req_region| oracle_region.region == req_region)
-                            {
+                            let region_matches = param_region.as_ref().map_or(true, |req_region| {
+                                oracle_region.region.to_lowercase() == *req_region
+                            });
+
+                            if region_matches {
                                 // Iterate through the CIDRs in the Oracle region
                                 for cidr in &oracle_region.cidrs {
-                                    // Check if the CIDR contains the requested tag (if provided)
-                                    if tag
-                                        .clone()
-                                        .map_or(true, |req_tag| cidr.tags.contains(&req_tag))
-                                    {
+                                    let tag_matches = param_tag.as_ref().map_or(true, |req_tag| {
+                                        cidr.tags.iter().any(|t| t.to_lowercase() == *req_tag)
+                                    });
+
+                                    if tag_matches {
                                         addresses.push(cidr.cidr.clone());
                                     }
                                 }
@@ -71,6 +73,13 @@ pub async fn query_oracle_data(
 
                         addresses
                     });
+
+            // Log the number of filtered IP prefixes
+            info!(
+                request_id = %request_id,
+                num_filtered_ips = filtered_data.len(),
+                "Filtered Oracle data"
+            );
 
             // If filtered data is found, return it as JSON
             if !filtered_data.is_empty() {
