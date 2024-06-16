@@ -9,9 +9,7 @@ combinations=(
 
 for combo in "${combinations[@]}"; do
     IFS=":" read -r params expected <<< "$combo"
-
     status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/v1/fastly?$params")
-
     if [ "$status" -ne "$expected" ]; then
         echo "Fastly test failed for params: $params. Expected $expected, got $status"
         exit 1

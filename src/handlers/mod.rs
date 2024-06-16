@@ -3,12 +3,12 @@ pub mod azure;
 pub mod fastly;
 pub mod gcp;
 pub mod health;
+pub mod linode;
 
-use crate::handlers::aws::query_aws_data;
-use crate::handlers::azure::query_azure_data;
-use crate::handlers::fastly::query_fastly_data;
-use crate::handlers::gcp::query_gcp_data;
-use crate::handlers::health::health_check;
+use crate::handlers::{
+    aws::query_aws_data, azure::query_azure_data, fastly::query_fastly_data, gcp::query_gcp_data,
+    health::health_check, linode::query_linode_data,
+};
 
 use rocket::{routes, Route};
 
@@ -18,6 +18,7 @@ pub fn routes() -> Vec<Route> {
         query_azure_data,
         query_fastly_data,
         query_gcp_data,
+        query_linode_data,
         health_check,
     ]
 }

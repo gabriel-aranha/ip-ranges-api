@@ -2,12 +2,13 @@ pub mod aws;
 pub mod azure;
 pub mod fastly;
 pub mod gcp;
+pub mod linode;
 
 use crate::cache::IntegrationCache;
-use crate::fetchers::aws::AwsIpRanges;
-use crate::fetchers::azure::AzureIpRanges;
-use crate::fetchers::fastly::FastlyIpRanges;
-use crate::fetchers::gcp::GcpIpRanges;
+use crate::fetchers::{
+    aws::AwsIpRanges, azure::AzureIpRanges, fastly::FastlyIpRanges, gcp::GcpIpRanges,
+    linode::LinodeIpRanges,
+};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tracing::{error, info};
@@ -18,6 +19,7 @@ pub enum IntegrationResult {
     Azure(IntegrationCache<AzureIpRanges>),
     Fastly(IntegrationCache<FastlyIpRanges>),
     Gcp(IntegrationCache<GcpIpRanges>),
+    Linode(IntegrationCache<LinodeIpRanges>),
 }
 
 #[async_trait]
@@ -92,9 +94,26 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
         }
     };
 
+    // Linode integration update task
+    let linode_task = async {
+        info!(execution_id = %execution_id, "Starting Linode integration update");
+        let mut linode_integration = linode::LinodeIntegration::new(execution_id);
+        let linode_cache = linode_integration.update_cache().await;
+        if let Some(_linode_data) = &linode_cache.data {
+            info!(execution_id = %execution_id, "Linode integration update succeeded");
+            Some((
+                "linode".to_string(),
+                IntegrationResult::Linode(linode_cache),
+            ))
+        } else {
+            error!(execution_id = %execution_id, "Linode integration update failed");
+            None
+        }
+    };
+
     // Wait for all integration tasks to complete
-    let (aws_result, azure_result, fastly_result, gcp_result) =
-        tokio::join!(aws_task, azure_task, fastly_task, gcp_task);
+    let (aws_result, azure_result, fastly_result, gcp_result, linode_result) =
+        tokio::join!(aws_task, azure_task, fastly_task, gcp_task, linode_task);
 
     if let Some((integration_name, integration_result)) = aws_result {
         all_data.insert(integration_name, integration_result);
@@ -109,6 +128,10 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     }
 
     if let Some((integration_name, integration_result)) = gcp_result {
+        all_data.insert(integration_name, integration_result);
+    }
+
+    if let Some((integration_name, integration_result)) = linode_result {
         all_data.insert(integration_name, integration_result);
     }
 

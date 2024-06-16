@@ -49,3 +49,6 @@ jobs:
 
     - name: Test GCP endpoint
       run: ./e2e/gcp.sh
+
+    - name: Test Linode endpoint
+      run: ./e2e/linode.sh
