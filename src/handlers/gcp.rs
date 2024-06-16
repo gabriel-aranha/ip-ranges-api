@@ -2,9 +2,20 @@ use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
 use crate::fetchers::gcp::GcpIpRanges;
 use rocket::get;
-use rocket::serde::json::serde_json;
+use rocket::serde::json::Json;
+use rocket::http::Status;
+use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
+
+#[derive(Serialize)]
+pub struct GcpApiResponse<T> {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
 
 #[get("/v1/gcp?<scope>&<service>&<ipv4>&<ipv6>")]
 pub fn query_gcp_data(
@@ -12,7 +23,7 @@ pub fn query_gcp_data(
     service: Option<String>,
     ipv4: Option<bool>,
     ipv6: Option<bool>,
-) -> Option<String> {
+) -> (Status, Json<GcpApiResponse<Vec<String>>>) {
     // Generate a unique request ID
     let request_id = Uuid::new_v4();
 
@@ -26,6 +37,18 @@ pub fn query_gcp_data(
         "Received request"
     );
 
+    // Check if both ipv4 and ipv6 flags are false or not set
+    if !ipv4.unwrap_or(false) && !ipv6.unwrap_or(false) {
+        return (
+            Status::BadRequest,
+            Json(GcpApiResponse {
+                status: "error".to_string(),
+                data: None,
+                message: Some("Either ipv4 or ipv6 must be specified".to_string()),
+            }),
+        );
+    }
+
     // Read the global cache
     let cache = CACHE.clone();
 
@@ -34,7 +57,7 @@ pub fn query_gcp_data(
         // Extract the GCP data
         if let Some(gcp_cache) = gcp_data_ref.downcast_ref::<IntegrationCache<GcpIpRanges>>() {
             // Filter the GCP data based on the provided parameters
-            let filtered_data: Vec<&str> = gcp_cache.data.as_ref().map_or_else(Vec::new, |data| {
+            let filtered_data: Vec<String> = gcp_cache.data.as_ref().map_or_else(Vec::new, |data| {
                 data.prefixes
                     .iter()
                     .filter_map(|prefix| {
@@ -52,11 +75,11 @@ pub fn query_gcp_data(
                                 || (ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some()));
 
                         if matches {
-                            // Return the appropriate IP prefix as &str
+                            // Return the appropriate IP prefix as String
                             if ipv4.unwrap_or(false) && prefix.ipv4_prefix.is_some() {
-                                Some(prefix.ipv4_prefix.as_deref().unwrap())
+                                Some(prefix.ipv4_prefix.as_ref().unwrap().clone())
                             } else if ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some() {
-                                Some(prefix.ipv6_prefix.as_deref().unwrap())
+                                Some(prefix.ipv6_prefix.as_ref().unwrap().clone())
                             } else {
                                 None
                             }
@@ -73,14 +96,29 @@ pub fn query_gcp_data(
                     request_id = %request_id,
                     "GCP data found for request"
                 );
-                return serde_json::to_string(&filtered_data).ok();
+                return (
+                    Status::Ok,
+                    Json(GcpApiResponse {
+                        status: "success".to_string(),
+                        data: Some(filtered_data),
+                        message: None,
+                    }),
+                );
             }
         }
     }
+
     // Log failure to retrieve GCP data
     error!(
         request_id = %request_id,
         "Failed to retrieve GCP data"
     );
-    None
+    (
+        Status::NotFound,
+        Json(GcpApiResponse {
+            status: "error".to_string(),
+            data: None,
+            message: Some("GCP data not found".to_string()),
+        }),
+    )
 }

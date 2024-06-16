@@ -2,16 +2,28 @@ use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
 use crate::fetchers::aws::AwsIpRanges;
 use rocket::get;
-use rocket::serde::json::serde_json;
+use rocket::serde::json::Json;
+use rocket::http::Status;
+use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
+
+// Make the AwsApiResponse struct public
+#[derive(Serialize)]
+pub struct AwsApiResponse<T> {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
 
 #[get("/v1/aws?<region>&<service>&<network_border_group>")]
 pub fn query_aws_data(
     region: Option<String>,
     service: Option<String>,
     network_border_group: Option<String>,
-) -> Option<String> {
+) -> (Status, Json<AwsApiResponse<Vec<String>>>) {
     // Generate a unique request ID
     let request_id = Uuid::new_v4();
 
@@ -32,7 +44,7 @@ pub fn query_aws_data(
         // Extract the AWS data
         if let Some(aws_cache) = aws_data_ref.downcast_ref::<IntegrationCache<AwsIpRanges>>() {
             // Filter the AWS data based on the provided parameters
-            let filtered_data: Vec<&str> = aws_cache.data.as_ref().map_or_else(Vec::new, |data| {
+            let filtered_data: Vec<String> = aws_cache.data.as_ref().map_or_else(Vec::new, |data| {
                 data.prefixes
                     .iter()
                     .filter_map(|prefix| {
@@ -53,8 +65,8 @@ pub fn query_aws_data(
                             });
 
                         if matches {
-                            // Return the IP prefix as &str
-                            Some(prefix.ip_prefix.as_str())
+                            // Return the IP prefix as String
+                            Some(prefix.ip_prefix.clone())
                         } else {
                             None
                         }
@@ -62,20 +74,36 @@ pub fn query_aws_data(
                     .collect()
             });
 
-            // Serialize the filtered data to JSON string
+            // If filtered data is found, return it as JSON
             if !filtered_data.is_empty() {
                 info!(
                     request_id = %request_id,
                     "AWS data found for request"
                 );
-                return serde_json::to_string(&filtered_data).ok();
+                return (
+                    Status::Ok,
+                    Json(AwsApiResponse {
+                        status: "success".to_string(),
+                        data: Some(filtered_data),
+                        message: None,
+                    }),
+                );
             }
         }
     }
+
     // Log failure to retrieve AWS data
     error!(
         request_id = %request_id,
         "Failed to retrieve AWS data"
     );
-    None
+
+    (
+        Status::NotFound,
+        Json(AwsApiResponse {
+            status: "error".to_string(),
+            data: None,
+            message: Some("AWS data not found".to_string()),
+        }),
+    )
 }
