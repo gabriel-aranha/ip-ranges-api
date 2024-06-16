@@ -44,6 +44,9 @@ jobs:
     - name: Test Azure endpoint
       run: ./e2e/azure.sh
 
+    - name: Test Cloudflare endpoint
+      run: ./e2e/cloudflare.sh
+
     - name: Test Fastly endpoint
       run: ./e2e/fastly.sh
 

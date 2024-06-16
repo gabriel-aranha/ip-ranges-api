@@ -1,6 +1,6 @@
 #!/bin/bash
 
-linode_combinations=(
+combinations=(
 	"alpha2code=US&ipv4=true:200"
 	"alpha2code=GB&region=ENG&ipv6=true:200"
 	"alpha2code=SG&ipv4=true&ipv6=true:200"

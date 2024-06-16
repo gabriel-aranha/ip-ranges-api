@@ -1,13 +1,14 @@
 pub mod aws;
 pub mod azure;
+pub mod cloudflare;
 pub mod fastly;
 pub mod gcp;
 pub mod linode;
 
 use crate::cache::IntegrationCache;
 use crate::fetchers::{
-    aws::AwsIpRanges, azure::AzureIpRanges, fastly::FastlyIpRanges, gcp::GcpIpRanges,
-    linode::LinodeIpRanges,
+    aws::AwsIpRanges, azure::AzureIpRanges, cloudflare::CloudflareIpRanges, fastly::FastlyIpRanges,
+    gcp::GcpIpRanges, linode::LinodeIpRanges,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -17,6 +18,7 @@ use uuid::Uuid;
 pub enum IntegrationResult {
     Aws(IntegrationCache<AwsIpRanges>),
     Azure(IntegrationCache<AzureIpRanges>),
+    Cloudflare(IntegrationCache<CloudflareIpRanges>),
     Fastly(IntegrationCache<FastlyIpRanges>),
     Gcp(IntegrationCache<GcpIpRanges>),
     Linode(IntegrationCache<LinodeIpRanges>),
@@ -30,6 +32,7 @@ pub trait Integration {
     fn parse(&self, data: &str) -> Option<Self::DataModel>;
 }
 
+// Update the update_all function to include Linode and Cloudflare tasks
 pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult> {
     let mut all_data = HashMap::new();
 
@@ -59,6 +62,23 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
             Some(("azure".to_string(), IntegrationResult::Azure(azure_cache)))
         } else {
             error!(execution_id = %execution_id, "Azure integration update failed");
+            None
+        }
+    };
+
+    // Cloudflare integration update task
+    let cloudflare_task = async {
+        info!(execution_id = %execution_id, "Starting Cloudflare integration update");
+        let mut cloudflare_integration = cloudflare::CloudflareIntegration::new(execution_id);
+        let cloudflare_cache = cloudflare_integration.update_cache().await;
+        if let Some(_cloudflare_data) = &cloudflare_cache.data {
+            info!(execution_id = %execution_id, "Cloudflare integration update succeeded");
+            Some((
+                "cloudflare".to_string(),
+                IntegrationResult::Cloudflare(cloudflare_cache),
+            ))
+        } else {
+            error!(execution_id = %execution_id, "Cloudflare integration update failed");
             None
         }
     };
@@ -112,14 +132,24 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     };
 
     // Wait for all integration tasks to complete
-    let (aws_result, azure_result, fastly_result, gcp_result, linode_result) =
-        tokio::join!(aws_task, azure_task, fastly_task, gcp_task, linode_task);
+    let (aws_result, azure_result, cloudflare_result, fastly_result, gcp_result, linode_result) = tokio::join!(
+        aws_task,
+        azure_task,
+        cloudflare_task,
+        fastly_task,
+        gcp_task,
+        linode_task
+    );
 
     if let Some((integration_name, integration_result)) = aws_result {
         all_data.insert(integration_name, integration_result);
     }
 
     if let Some((integration_name, integration_result)) = azure_result {
+        all_data.insert(integration_name, integration_result);
+    }
+
+    if let Some((integration_name, integration_result)) = cloudflare_result {
         all_data.insert(integration_name, integration_result);
     }
 
