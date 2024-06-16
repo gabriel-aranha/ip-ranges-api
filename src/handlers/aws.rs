@@ -1,5 +1,4 @@
-use crate::cache::IntegrationCache;
-use crate::cache::CACHE;
+use crate::cache::{IntegrationCache, CACHE};
 use crate::fetchers::aws::AwsIpRanges;
 use rocket::get;
 use rocket::http::Status;
@@ -8,7 +7,6 @@ use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
 
-// Make the AwsApiResponse struct public
 #[derive(Serialize)]
 pub struct AwsApiResponse<T> {
     pub status: String,

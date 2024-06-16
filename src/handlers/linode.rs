@@ -1,5 +1,5 @@
 use crate::cache::{IntegrationCache, CACHE};
-use crate::fetchers::azure::AzureIpRanges;
+use crate::fetchers::linode::LinodeIpRanges;
 use rocket::get;
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -8,7 +8,7 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 #[derive(Serialize)]
-pub struct AzureApiResponse<T> {
+pub struct LinodeApiResponse<T> {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<T>,
@@ -16,21 +16,21 @@ pub struct AzureApiResponse<T> {
     pub message: Option<String>,
 }
 
-#[get("/v1/azure?<region>&<system_service>&<ipv4>&<ipv6>")]
-pub fn query_azure_data(
+#[get("/v1/linode?<alpha2code>&<region>&<ipv4>&<ipv6>")]
+pub fn query_linode_data(
+    alpha2code: Option<String>,
     region: Option<String>,
-    system_service: Option<String>,
     ipv4: Option<bool>,
     ipv6: Option<bool>,
-) -> (Status, Json<AzureApiResponse<Vec<String>>>) {
+) -> (Status, Json<LinodeApiResponse<Vec<String>>>) {
     // Generate a unique request ID
     let request_id = Uuid::new_v4();
 
     // Log the start of the request with structured fields for received parameters
     info!(
         request_id = %request_id,
+        alpha2code = alpha2code.clone().map(|s| s.to_lowercase()),
         region = region.clone().map(|s| s.to_lowercase()),
-        system_service = system_service.clone().map(|s| s.to_lowercase()),
         ipv4 = ipv4.unwrap_or(false),
         ipv6 = ipv6.unwrap_or(false),
         "Received request"
@@ -40,7 +40,7 @@ pub fn query_azure_data(
     if !ipv4.unwrap_or(false) && !ipv6.unwrap_or(false) {
         return (
             Status::BadRequest,
-            Json(AzureApiResponse {
+            Json(LinodeApiResponse {
                 status: "error".to_string(),
                 data: None,
                 message: Some("Either ipv4 or ipv6 must be specified".to_string()),
@@ -51,34 +51,34 @@ pub fn query_azure_data(
     // Read the global cache
     let cache = CACHE.clone();
 
-    // Access the Azure cache from the global cache
-    if let Some(azure_data_ref) = cache.get("azure") {
-        // Extract the Azure data
-        if let Some(azure_cache) = azure_data_ref.downcast_ref::<IntegrationCache<AzureIpRanges>>()
+    // Access the Linode cache from the global cache
+    if let Some(linode_data_ref) = cache.get("linode") {
+        // Extract the Linode data
+        if let Some(linode_cache) =
+            linode_data_ref.downcast_ref::<IntegrationCache<LinodeIpRanges>>()
         {
-            // Filter the Azure data based on the provided parameters
+            // Filter the Linode data based on the provided parameters
             let mut filtered_data: Vec<String> =
-                azure_cache.data.as_ref().map_or_else(Vec::new, |data| {
+                linode_cache.data.as_ref().map_or_else(Vec::new, |data| {
+                    let param_alpha2code = alpha2code.clone().map(|s| s.to_uppercase());
                     let param_region = region.clone().map(|s| s.to_lowercase());
-                    let param_system_service = system_service.clone().map(|s| s.to_lowercase());
 
-                    data.values
+                    data.ranges
                         .iter()
-                        .filter_map(|value| {
-                            let matches =
-                                param_region.as_deref().map_or(true, |param| {
-                                    value.properties.region.to_lowercase() == param
-                                }) && param_system_service.as_deref().map_or(true, |param| {
-                                    value.properties.system_service.to_lowercase() == param
+                        .filter_map(|range| {
+                            let matches = param_alpha2code
+                                .as_deref()
+                                .map_or(true, |param| param == range.alpha2code.to_uppercase())
+                                && param_region.as_deref().map_or(true, |param| {
+                                    range.region.to_lowercase().contains(param)
                                 });
 
                             if matches {
-                                Some(value.properties.address_prefixes.clone())
+                                Some(range.ip_prefix.clone())
                             } else {
                                 None
                             }
                         })
-                        .flatten()
                         .collect()
                 });
 
@@ -100,11 +100,11 @@ pub fn query_azure_data(
             if !filtered_data.is_empty() {
                 info!(
                     request_id = %request_id,
-                    "Azure data found for request"
+                    "Linode data found for request"
                 );
                 return (
                     Status::Ok,
-                    Json(AzureApiResponse {
+                    Json(LinodeApiResponse {
                         status: "success".to_string(),
                         data: Some(filtered_data),
                         message: None,
@@ -114,17 +114,17 @@ pub fn query_azure_data(
         }
     }
 
-    // Log failure to retrieve Azure data
+    // Log failure to retrieve Linode data
     error!(
         request_id = %request_id,
-        "Failed to retrieve Azure data"
+        "Failed to retrieve Linode data"
     );
     (
         Status::NotFound,
-        Json(AzureApiResponse {
+        Json(LinodeApiResponse {
             status: "error".to_string(),
             data: None,
-            message: Some("Azure data not found".to_string()),
+            message: Some("Linode data not found".to_string()),
         }),
     )
 }

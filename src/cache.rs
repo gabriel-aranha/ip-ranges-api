@@ -46,30 +46,67 @@ async fn update_cache() {
     for (integration_name, integration_result) in data {
         match integration_result {
             IntegrationResult::Aws(aws_cache) => {
-                let integration_name_str = integration_name.as_str();
                 CACHE.insert(integration_name.clone(), Box::new(aws_cache));
                 info!(
-                    integration_name = integration_name_str,
+                    integration_name = integration_name.as_str(),
                     execution_id = %execution_id,
                     "Cache updated for AWS integration"
                 );
             }
             IntegrationResult::Azure(azure_cache) => {
-                let integration_name_str = integration_name.as_str();
                 CACHE.insert(integration_name.clone(), Box::new(azure_cache));
                 info!(
-                    integration_name = integration_name_str,
+                    integration_name = integration_name.as_str(),
                     execution_id = %execution_id,
                     "Cache updated for Azure integration"
                 );
             }
+            IntegrationResult::Cloudflare(cloudflare_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(cloudflare_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Cloudflare integration"
+                );
+            }
+            IntegrationResult::DigitalOcean(digital_ocean_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(digital_ocean_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Digital Ocean integration"
+                );
+            }
+            IntegrationResult::Fastly(fastly_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(fastly_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Fastly integration"
+                );
+            }
             IntegrationResult::Gcp(gcp_cache) => {
-                let integration_name_str = integration_name.as_str();
                 CACHE.insert(integration_name.clone(), Box::new(gcp_cache));
                 info!(
-                    integration_name = integration_name_str,
+                    integration_name = integration_name.as_str(),
                     execution_id = %execution_id,
                     "Cache updated for GCP integration"
+                );
+            }
+            IntegrationResult::Linode(linode_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(linode_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Linode integration"
+                );
+            }
+            IntegrationResult::Oracle(oracle_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(oracle_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Oracle integration"
                 );
             }
         }

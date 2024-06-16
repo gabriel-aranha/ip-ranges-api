@@ -41,8 +41,23 @@ jobs:
     - name: Test AWS endpoint
       run: ./e2e/aws.sh
 
+    - name: Test Azure endpoint
+      run: ./e2e/azure.sh
+
+    - name: Test Cloudflare endpoint
+      run: ./e2e/cloudflare.sh
+
+    - name: Test DigitalOcean endpoint
+      run: ./e2e/digitalocean.sh
+
+    - name: Test Fastly endpoint
+      run: ./e2e/fastly.sh
+
     - name: Test GCP endpoint
       run: ./e2e/gcp.sh
 
-    - name: Test Azure endpoint
-      run: ./e2e/azure.sh
+    - name: Test Linode endpoint
+      run: ./e2e/linode.sh
+
+    - name: Test Oracle endpoint
+      run: ./e2e/oracle.sh
