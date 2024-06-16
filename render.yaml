@@ -11,4 +11,5 @@ services:
       value: 8000
   buildCommand: cargo build --release
   startCommand: cargo run --release
+  healthCheckPath: /health
 version: "1"

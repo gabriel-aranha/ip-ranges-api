@@ -32,8 +32,8 @@ jobs:
     - name: Run API server
       run: cargo run --release &
 
-    - name: Wait for API server to start
-      run: sleep 15
+    - name: Wait for health endpoint to be ready
+      run: ./e2e/wait_for_health.sh
 
     - name: Test AWS endpoint
       run: ./e2e/aws.sh
