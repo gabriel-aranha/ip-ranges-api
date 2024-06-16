@@ -2,8 +2,8 @@ use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
 use crate::fetchers::gcp::GcpIpRanges;
 use rocket::get;
-use rocket::serde::json::Json;
 use rocket::http::Status;
+use rocket::serde::json::Json;
 use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -57,38 +57,39 @@ pub fn query_gcp_data(
         // Extract the GCP data
         if let Some(gcp_cache) = gcp_data_ref.downcast_ref::<IntegrationCache<GcpIpRanges>>() {
             // Filter the GCP data based on the provided parameters
-            let filtered_data: Vec<String> = gcp_cache.data.as_ref().map_or_else(Vec::new, |data| {
-                data.prefixes
-                    .iter()
-                    .filter_map(|prefix| {
-                        // Convert both parameter and data to lowercase for case-insensitive comparison
-                        let param_scope = scope.clone().map(|s| s.to_lowercase());
-                        let param_service = service.clone().map(|s| s.to_lowercase());
+            let filtered_data: Vec<String> =
+                gcp_cache.data.as_ref().map_or_else(Vec::new, |data| {
+                    data.prefixes
+                        .iter()
+                        .filter_map(|prefix| {
+                            // Convert both parameter and data to lowercase for case-insensitive comparison
+                            let param_scope = scope.clone().map(|s| s.to_lowercase());
+                            let param_service = service.clone().map(|s| s.to_lowercase());
 
-                        let matches = param_scope
-                            .as_deref()
-                            .map_or(true, |param| prefix.scope.to_lowercase() == param)
-                            && param_service
+                            let matches = param_scope
                                 .as_deref()
-                                .map_or(true, |param| prefix.service.to_lowercase() == param)
-                            && ((ipv4.unwrap_or(false) && prefix.ipv4_prefix.is_some())
-                                || (ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some()));
+                                .map_or(true, |param| prefix.scope.to_lowercase() == param)
+                                && param_service
+                                    .as_deref()
+                                    .map_or(true, |param| prefix.service.to_lowercase() == param)
+                                && ((ipv4.unwrap_or(false) && prefix.ipv4_prefix.is_some())
+                                    || (ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some()));
 
-                        if matches {
-                            // Return the appropriate IP prefix as String
-                            if ipv4.unwrap_or(false) && prefix.ipv4_prefix.is_some() {
-                                Some(prefix.ipv4_prefix.as_ref().unwrap().clone())
-                            } else if ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some() {
-                                Some(prefix.ipv6_prefix.as_ref().unwrap().clone())
+                            if matches {
+                                // Return the appropriate IP prefix as String
+                                if ipv4.unwrap_or(false) && prefix.ipv4_prefix.is_some() {
+                                    Some(prefix.ipv4_prefix.as_ref().unwrap().clone())
+                                } else if ipv6.unwrap_or(false) && prefix.ipv6_prefix.is_some() {
+                                    Some(prefix.ipv6_prefix.as_ref().unwrap().clone())
+                                } else {
+                                    None
+                                }
                             } else {
                                 None
                             }
-                        } else {
-                            None
-                        }
-                    })
-                    .collect()
-            });
+                        })
+                        .collect()
+                });
 
             // Serialize the filtered data to JSON string
             if !filtered_data.is_empty() {

@@ -2,8 +2,8 @@ use crate::cache::IntegrationCache;
 use crate::cache::CACHE;
 use crate::fetchers::azure::AzureIpRanges;
 use rocket::get;
-use rocket::serde::json::Json;
 use rocket::http::Status;
+use rocket::serde::json::Json;
 use serde::Serialize;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -55,26 +55,33 @@ pub fn query_azure_data(
     // Access the Azure cache from the global cache
     if let Some(azure_data_ref) = cache.get("azure") {
         // Extract the Azure data
-        if let Some(azure_cache) = azure_data_ref.downcast_ref::<IntegrationCache<AzureIpRanges>>() {
+        if let Some(azure_cache) = azure_data_ref.downcast_ref::<IntegrationCache<AzureIpRanges>>()
+        {
             // Filter the Azure data based on the provided parameters
-            let mut filtered_data: Vec<String> = azure_cache.data.as_ref().map_or_else(Vec::new, |data| {
-                let param_region = region.clone().map(|s| s.to_lowercase());
-                let param_system_service = system_service.clone().map(|s| s.to_lowercase());
+            let mut filtered_data: Vec<String> =
+                azure_cache.data.as_ref().map_or_else(Vec::new, |data| {
+                    let param_region = region.clone().map(|s| s.to_lowercase());
+                    let param_system_service = system_service.clone().map(|s| s.to_lowercase());
 
-                data.values.iter().filter_map(|value| {
-                    let matches = param_region.as_deref().map_or(true, |param| {
-                        value.properties.region.to_lowercase() == param
-                    }) && param_system_service.as_deref().map_or(true, |param| {
-                        value.properties.system_service.to_lowercase() == param
-                    });
+                    data.values
+                        .iter()
+                        .filter_map(|value| {
+                            let matches =
+                                param_region.as_deref().map_or(true, |param| {
+                                    value.properties.region.to_lowercase() == param
+                                }) && param_system_service.as_deref().map_or(true, |param| {
+                                    value.properties.system_service.to_lowercase() == param
+                                });
 
-                    if matches {
-                        Some(value.properties.address_prefixes.clone())
-                    } else {
-                        None
-                    }
-                }).flatten().collect()
-            });
+                            if matches {
+                                Some(value.properties.address_prefixes.clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .flatten()
+                        .collect()
+                });
 
             let ipv4_flag = ipv4.unwrap_or(false);
             let ipv6_flag = ipv6.unwrap_or(false);
