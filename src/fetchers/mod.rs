@@ -1,19 +1,26 @@
+// fetchers.rs
+
 pub mod aws;
 pub mod azure;
 pub mod cloudflare;
 pub mod fastly;
 pub mod gcp;
 pub mod linode;
+pub mod oracle;
 
 use crate::cache::IntegrationCache;
-use crate::fetchers::{
-    aws::AwsIpRanges, azure::AzureIpRanges, cloudflare::CloudflareIpRanges, fastly::FastlyIpRanges,
-    gcp::GcpIpRanges, linode::LinodeIpRanges,
-};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tracing::{error, info};
 use uuid::Uuid;
+
+use aws::AwsIpRanges;
+use azure::AzureIpRanges;
+use cloudflare::CloudflareIpRanges;
+use fastly::FastlyIpRanges;
+use gcp::GcpIpRanges;
+use linode::LinodeIpRanges;
+use oracle::OracleIpRanges;
 
 pub enum IntegrationResult {
     Aws(IntegrationCache<AwsIpRanges>),
@@ -22,6 +29,7 @@ pub enum IntegrationResult {
     Fastly(IntegrationCache<FastlyIpRanges>),
     Gcp(IntegrationCache<GcpIpRanges>),
     Linode(IntegrationCache<LinodeIpRanges>),
+    Oracle(IntegrationCache<OracleIpRanges>),
 }
 
 #[async_trait]
@@ -32,7 +40,7 @@ pub trait Integration {
     fn parse(&self, data: &str) -> Option<Self::DataModel>;
 }
 
-// Update the update_all function to include Linode and Cloudflare tasks
+// Update the update_all function to include Oracle and Cloudflare tasks
 pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult> {
     let mut all_data = HashMap::new();
 
@@ -131,14 +139,40 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
         }
     };
 
+    // Oracle integration update task
+    let oracle_task = async {
+        info!(execution_id = %execution_id, "Starting Oracle integration update");
+        let mut oracle_integration = oracle::OracleIntegration::new(execution_id);
+        let oracle_cache = oracle_integration.update_cache().await;
+        if let Some(_oracle_data) = &oracle_cache.data {
+            info!(execution_id = %execution_id, "Oracle integration update succeeded");
+            Some((
+                "oracle".to_string(),
+                IntegrationResult::Oracle(oracle_cache),
+            ))
+        } else {
+            error!(execution_id = %execution_id, "Oracle integration update failed");
+            None
+        }
+    };
+
     // Wait for all integration tasks to complete
-    let (aws_result, azure_result, cloudflare_result, fastly_result, gcp_result, linode_result) = tokio::join!(
+    let (
+        aws_result,
+        azure_result,
+        cloudflare_result,
+        fastly_result,
+        gcp_result,
+        linode_result,
+        oracle_result,
+    ) = tokio::join!(
         aws_task,
         azure_task,
         cloudflare_task,
         fastly_task,
         gcp_task,
-        linode_task
+        linode_task,
+        oracle_task
     );
 
     if let Some((integration_name, integration_result)) = aws_result {
@@ -162,6 +196,10 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     }
 
     if let Some((integration_name, integration_result)) = linode_result {
+        all_data.insert(integration_name, integration_result);
+    }
+
+    if let Some((integration_name, integration_result)) = oracle_result {
         all_data.insert(integration_name, integration_result);
     }
 

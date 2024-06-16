@@ -55,3 +55,6 @@ jobs:
 
     - name: Test Linode endpoint
       run: ./e2e/linode.sh
+
+    - name: Test Oracle endpoint
+      run: ./e2e/oracle.sh

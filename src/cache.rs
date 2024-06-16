@@ -7,7 +7,6 @@ use tokio::task;
 use tracing::info;
 use uuid::Uuid;
 
-// Reuse IntegrationCache struct for all integrations
 #[allow(dead_code)]
 pub struct IntegrationCache<T> {
     pub data: Option<T>,
@@ -21,8 +20,7 @@ impl<T> IntegrationCache<T> {
 
 lazy_static! {
     // Define the global cache as a map of integration names to their data
-    pub static ref CACHE: Arc<DashMap<String, Box<dyn std::any::Any + Send + Sync>>> =
-        Arc::new(DashMap::new());
+    pub static ref CACHE: Arc<DashMap<String, Box<dyn std::any::Any + Send + Sync>>> = Arc::new(DashMap::new());
 }
 
 pub async fn initialize_cache() {
@@ -93,6 +91,14 @@ async fn update_cache() {
                     integration_name = integration_name.as_str(),
                     execution_id = %execution_id,
                     "Cache updated for Linode integration"
+                );
+            }
+            IntegrationResult::Oracle(oracle_cache) => {
+                CACHE.insert(integration_name.clone(), Box::new(oracle_cache));
+                info!(
+                    integration_name = integration_name.as_str(),
+                    execution_id = %execution_id,
+                    "Cache updated for Oracle integration"
                 );
             }
         }
