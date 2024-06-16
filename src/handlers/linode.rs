@@ -29,7 +29,7 @@ pub fn query_linode_data(
     // Log the start of the request with structured fields for received parameters
     info!(
         request_id = %request_id,
-        alpha2code = alpha2code.clone().map(|s| s.to_uppercase()),
+        alpha2code = alpha2code.clone().map(|s| s.to_lowercase()),
         region = region.clone().map(|s| s.to_lowercase()),
         ipv4 = ipv4.unwrap_or(false),
         ipv6 = ipv6.unwrap_or(false),

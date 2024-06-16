@@ -28,8 +28,8 @@ pub async fn query_oracle_data(
     // Log the start of the request with structured fields for received parameters
     info!(
         request_id = %request_id,
-        region = region.clone().unwrap_or_default(),
-        tag = tag.clone().unwrap_or_default(),
+        region = region.clone().map(|s| s.to_lowercase()),
+        tag = tag.clone().map(|s| s.to_lowercase()),
         "Received Oracle data request"
     );
 
