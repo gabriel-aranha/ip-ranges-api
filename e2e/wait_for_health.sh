@@ -12,7 +12,7 @@ ATTEMPT=0
 # Loop until the health check returns "ok" or the max attempts are reached
 until [ $ATTEMPT -ge $MAX_ATTEMPTS ]; do
   RESPONSE=$(curl -s $HEALTH_URL)
-  STATUS=$(echo $RESPONSE | grep -o '"status":"[^"]*"' | grep -o '[^"]*$')
+  STATUS=$(echo $RESPONSE | jq -r '.status')
   if [ "$STATUS" = "ok" ]; then
     echo "Health check passed!"
     exit 0
