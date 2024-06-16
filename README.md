@@ -80,6 +80,65 @@ GET /v1/azure?region=<region>&system_service=<system_service>&ipv4=<true|false>&
 curl "http://localhost:8000/v1/azure?region=westus2&ipv4=true"
 ```
 
+### Cloudflare Usage
+
+#### Endpoint
+
+```
+GET /v1/cloudflare?ipv4=<true|false>&ipv6=<true|false>
+```
+
+#### Parameters
+
+- `ipv4` (required): Include IPv4 prefixes if true (default: false).
+- `ipv6` (required): Include IPv6 prefixes if true (default: false).
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/cloudflare?ipv4=true"
+```
+
+### DigitalOcean Usage
+
+#### Endpoint
+
+```
+GET /v1/digitalocean?alpha2code=<alpha2code>&region=<region>&ipv4=<true|false>&ipv6=<true|false>
+```
+
+#### Parameters
+
+- `alpha2code` (optional): Filter by DigitalOcean alpha2code.
+- `region` (optional): Filter by DigitalOcean region.
+- `ipv4` (required): Include IPv4 prefixes if true (default: false).
+- `ipv6` (required): Include IPv6 prefixes if true (default: false).
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/digitalocean?alpha2code=US&ipv4=true"
+```
+
+### Fastly Usage
+
+#### Endpoint
+
+```
+GET /v1/fastly?ipv4=<true|false>&ipv6=<true|false>
+```
+
+#### Parameters
+
+- `ipv4` (required): Include IPv4 prefixes if true (default: false).
+- `ipv6` (required): Include IPv6 prefixes if true (default: false).
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/fastly?ipv4=true"
+```
+
 ### GCP Usage
 
 #### Endpoint
@@ -99,4 +158,44 @@ GET /v1/gcp?scope=<scope>&service=<service>&ipv4=<true|false>&ipv6=<true|false>
 
 ```
 curl "http://localhost:8000/v1/gcp?scope=africa-south1&ipv4=true"
+```
+
+### Linode Usage
+
+#### Endpoint
+
+```
+GET /v1/linode?alpha2code=<alpha2code>&region=<region>&ipv4=<true|false>&ipv6=<true|false>
+```
+
+#### Parameters
+
+- `alpha2code` (optional): Filter by Linode alpha2code.
+- `region` (optional): Filter by Linode region.
+- `ipv4` (required): Include IPv4 prefixes if true (default: false).
+- `ipv6` (required): Include IPv6 prefixes if true (default: false).
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/linode?alpha2code=US&ipv4=true"
+```
+
+### Oracle Usage
+
+#### Endpoint
+
+```
+GET /v1/oracle?region=<region>&tag=<tag>
+```
+
+#### Parameters
+
+- `region` (optional): Filter by Oracle region.
+- `tag` (optional): Filter by Oracle tag.
+
+#### Example Request
+
+```
+curl "http://localhost:8000/v1/oracle?region=us-ashburn-1&tag=OCI"
 ```
