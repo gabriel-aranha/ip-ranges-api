@@ -12,7 +12,7 @@ pub fn query_azure_data(
     system_service: Option<String>,
     ipv4: Option<bool>,
     ipv6: Option<bool>,
-) -> Option<String> {
+) -> Option<serde_json::Value> {
     // Generate a unique request ID
     let request_id = Uuid::new_v4();
 
@@ -35,75 +35,51 @@ pub fn query_azure_data(
         if let Some(azure_cache) = azure_data_ref.downcast_ref::<IntegrationCache<AzureIpRanges>>()
         {
             // Filter the Azure data based on the provided parameters
-            let filtered_data: Vec<String> =
-                azure_cache.data.as_ref().map_or_else(Vec::new, |data| {
-                    let mut filtered_data: Vec<String> = data
-                        .values
-                        .iter()
-                        .filter_map(|value| {
-                            let param_region = region.clone().map(|s| s.to_lowercase());
-                            let param_system_service =
-                                system_service.clone().map(|s| s.to_lowercase());
+            let mut filtered_data: Vec<String> = azure_cache.data.as_ref().map_or_else(Vec::new, |data| {
+                let param_region = region.clone().map(|s| s.to_lowercase());
+                let param_system_service = system_service.clone().map(|s| s.to_lowercase());
 
-                            let matches =
-                                param_region.as_deref().map_or(true, |param| {
-                                    value.properties.region.to_lowercase() == param
-                                }) && param_system_service.as_deref().map_or(true, |param| {
-                                    value.properties.system_service.to_lowercase() == param
-                                });
-
-                            if matches {
-                                Some(
-                                    value
-                                        .properties
-                                        .address_prefixes
-                                        .iter()
-                                        .map(|s| s.as_str())
-                                        .collect::<Vec<&str>>()
-                                        .join(","),
-                                )
-                            } else {
-                                None
-                            }
-                        })
-                        .collect();
-
-                    let ipv4_flag = ipv4.unwrap_or(false);
-                    let ipv6_flag = ipv6.unwrap_or(false);
-
-                    // Further filter based on IPv4 and IPv6 flags
-                    if !ipv4_flag && !ipv6_flag {
-                        return Vec::new();
-                    }
-
-                    filtered_data.iter_mut().for_each(|prefixes| {
-                        let prefix_list: Vec<&str> = prefixes.split(',').collect();
-                        let filtered_prefix_list: Vec<&str> = prefix_list
-                            .into_iter()
-                            .filter(|prefix| {
-                                let is_ipv4 = is_ipv4(prefix);
-                                if ipv4_flag && !ipv6_flag {
-                                    is_ipv4
-                                } else if !ipv4_flag && ipv6_flag {
-                                    !is_ipv4
-                                } else {
-                                    true
-                                }
-                            })
-                            .collect();
-                        *prefixes = filtered_prefix_list.join(",");
+                data.values.iter().filter_map(|value| {
+                    let matches = param_region.as_deref().map_or(true, |param| {
+                        value.properties.region.to_lowercase() == param
+                    }) && param_system_service.as_deref().map_or(true, |param| {
+                        value.properties.system_service.to_lowercase() == param
                     });
 
-                    filtered_data
-                });
+                    if matches {
+                        Some(value.properties.address_prefixes.clone())
+                    } else {
+                        None
+                    }
+                }).flatten().collect()
+            });
 
-            // Serialize the filtered data to JSON string
+            let ipv4_flag = ipv4.unwrap_or(false);
+            let ipv6_flag = ipv6.unwrap_or(false);
+
+            // Further filter based on IPv4 and IPv6 flags
+            if !ipv4_flag && !ipv6_flag {
+                return None;
+            }
+
+            filtered_data.retain(|prefix| {
+                let is_ipv4 = is_ipv4(prefix);
+                if ipv4_flag && !ipv6_flag {
+                    is_ipv4
+                } else if !ipv4_flag && ipv6_flag {
+                    !is_ipv4
+                } else {
+                    true
+                }
+            });
+
+            // Return the filtered data as a JSON response
             if !filtered_data.is_empty() {
                 info!(
                     request_id = %request_id,
                     "Azure data found for request"
                 );
-                return serde_json::to_string(&filtered_data).ok();
+                return Some(serde_json::json!(filtered_data));
             }
         }
     }
