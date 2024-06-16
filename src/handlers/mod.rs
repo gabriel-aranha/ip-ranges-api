@@ -1,10 +1,12 @@
 pub mod aws;
 pub mod azure;
+pub mod fastly;
 pub mod gcp;
 pub mod health;
 
 use crate::handlers::aws::query_aws_data;
 use crate::handlers::azure::query_azure_data;
+use crate::handlers::fastly::query_fastly_data;
 use crate::handlers::gcp::query_gcp_data;
 use crate::handlers::health::health_check;
 
@@ -14,6 +16,7 @@ pub fn routes() -> Vec<Route> {
     routes![
         query_aws_data,
         query_azure_data,
+        query_fastly_data,
         query_gcp_data,
         health_check,
     ]

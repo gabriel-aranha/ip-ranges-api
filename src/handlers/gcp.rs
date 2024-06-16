@@ -1,5 +1,4 @@
-use crate::cache::IntegrationCache;
-use crate::cache::CACHE;
+use crate::cache::{IntegrationCache, CACHE};
 use crate::fetchers::gcp::GcpIpRanges;
 use rocket::get;
 use rocket::http::Status;

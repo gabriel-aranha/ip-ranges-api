@@ -63,6 +63,15 @@ async fn update_cache() {
                     "Cache updated for Azure integration"
                 );
             }
+            IntegrationResult::Fastly(fastly_cache) => {
+                let integration_name_str = integration_name.as_str();
+                CACHE.insert(integration_name.clone(), Box::new(fastly_cache));
+                info!(
+                    integration_name = integration_name_str,
+                    execution_id = %execution_id,
+                    "Cache updated for Fastly integration"
+                );
+            }
             IntegrationResult::Gcp(gcp_cache) => {
                 let integration_name_str = integration_name.as_str();
                 CACHE.insert(integration_name.clone(), Box::new(gcp_cache));

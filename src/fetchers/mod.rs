@@ -1,10 +1,12 @@
 pub mod aws;
 pub mod azure;
+pub mod fastly;
 pub mod gcp;
 
 use crate::cache::IntegrationCache;
 use crate::fetchers::aws::AwsIpRanges;
 use crate::fetchers::azure::AzureIpRanges;
+use crate::fetchers::fastly::FastlyIpRanges;
 use crate::fetchers::gcp::GcpIpRanges;
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -14,6 +16,7 @@ use uuid::Uuid;
 pub enum IntegrationResult {
     Aws(IntegrationCache<AwsIpRanges>),
     Azure(IntegrationCache<AzureIpRanges>),
+    Fastly(IntegrationCache<FastlyIpRanges>),
     Gcp(IntegrationCache<GcpIpRanges>),
 }
 
@@ -58,6 +61,23 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
         }
     };
 
+    // Fastly integration update task
+    let fastly_task = async {
+        info!(execution_id = %execution_id, "Starting Fastly integration update");
+        let mut fastly_integration = fastly::FastlyIntegration::new(execution_id);
+        let fastly_cache = fastly_integration.update_cache().await;
+        if let Some(_fastly_data) = &fastly_cache.data {
+            info!(execution_id = %execution_id, "Fastly integration update succeeded");
+            Some((
+                "fastly".to_string(),
+                IntegrationResult::Fastly(fastly_cache),
+            ))
+        } else {
+            error!(execution_id = %execution_id, "Fastly integration update failed");
+            None
+        }
+    };
+
     // GCP integration update task
     let gcp_task = async {
         info!(execution_id = %execution_id, "Starting GCP integration update");
@@ -73,13 +93,18 @@ pub async fn update_all(execution_id: Uuid) -> HashMap<String, IntegrationResult
     };
 
     // Wait for all integration tasks to complete
-    let (aws_result, azure_result, gcp_result) = tokio::join!(aws_task, azure_task, gcp_task);
+    let (aws_result, azure_result, fastly_result, gcp_result) =
+        tokio::join!(aws_task, azure_task, fastly_task, gcp_task);
 
     if let Some((integration_name, integration_result)) = aws_result {
         all_data.insert(integration_name, integration_result);
     }
 
     if let Some((integration_name, integration_result)) = azure_result {
+        all_data.insert(integration_name, integration_result);
+    }
+
+    if let Some((integration_name, integration_result)) = fastly_result {
         all_data.insert(integration_name, integration_result);
     }
 

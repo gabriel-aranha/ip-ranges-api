@@ -1,5 +1,4 @@
-use crate::cache::IntegrationCache;
-use crate::cache::CACHE;
+use crate::cache::{IntegrationCache, CACHE};
 use crate::fetchers::aws::AwsIpRanges;
 use rocket::get;
 use rocket::http::Status;
