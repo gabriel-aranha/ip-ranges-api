@@ -11,6 +11,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y jq
+
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -32,8 +35,8 @@ jobs:
     - name: Run API server
       run: cargo run --release &
 
-    - name: Wait for API server to start
-      run: sleep 15
+    - name: Wait for health endpoint to be ready
+      run: ./e2e/wait_for_health.sh
 
     - name: Test AWS endpoint
       run: ./e2e/aws.sh
