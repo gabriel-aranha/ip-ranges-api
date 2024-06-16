@@ -74,13 +74,6 @@ pub async fn query_oracle_data(
                         addresses
                     });
 
-            // Log the number of filtered IP prefixes
-            info!(
-                request_id = %request_id,
-                num_filtered_ips = filtered_data.len(),
-                "Filtered Oracle data"
-            );
-
             // If filtered data is found, return it as JSON
             if !filtered_data.is_empty() {
                 info!(
