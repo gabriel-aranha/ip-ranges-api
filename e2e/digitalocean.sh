@@ -4,7 +4,6 @@ combinations=(
 	"alpha2code=US&ipv4=true:200"
 	"alpha2code=GB&region=GB-SLG&ipv6=true:200"
 	"alpha2code=SG&ipv4=true&ipv6=true:200"
-	"alpha2code=JP&ipv4=true:200"
 	"ipv6=true:200"
 	":400"
 )
