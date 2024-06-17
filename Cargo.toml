@@ -14,4 +14,4 @@ dashmap = "5.1.0"
 tracing = "0.1.27"
 tracing-subscriber = "0.3.18"
 uuid = { version = "1.8.0", features = ["v4"] }
-scraper = "0.13"
+scraper = "0.19"
