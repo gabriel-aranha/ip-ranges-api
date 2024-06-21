@@ -1,7 +1,9 @@
 name: Rust build and E2E tests
 
 on:
-  push
+  push:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   build:
