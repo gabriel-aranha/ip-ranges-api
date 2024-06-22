@@ -1,7 +1,7 @@
 # Exported from Render on 2024-06-15T15:27:30Z
 services:
 - type: web
-  name: 3ff6eb2f-7583-418a-a716-451662f30189
+  name: dcb888ba-fb7e-450e-ad67-aa81571252f8
   runtime: rust
   repo: https://github.com/gabriel-aranha/ip-ranges-api
   plan: starter
